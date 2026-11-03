@@ -82,6 +82,7 @@ public:
 	struct LiteralNode;
 	struct MatchNode;
 	struct MatchBranchNode;
+	struct NameOfNode;
 	struct ParameterNode;
 	struct PassNode;
 	struct PatternNode;
@@ -334,6 +335,7 @@ public:
 			LITERAL,
 			MATCH,
 			MATCH_BRANCH,
+			NAMEOF,
 			PARAMETER,
 			PASS,
 			PATTERN,
@@ -1016,6 +1018,14 @@ public:
 		}
 	};
 
+	struct NameOfNode : public ExpressionNode {
+		ExpressionNode *expression = nullptr;
+
+		NameOfNode() {
+			type = NAMEOF;
+		}
+	};
+
 	struct ParameterNode : public AssignableNode {
 		ParameterNode() {
 			type = PARAMETER;
@@ -1659,6 +1669,7 @@ private:
 	ExpressionNode *parse_dictionary(ExpressionNode *p_previous_operand, bool p_can_assign);
 	ExpressionNode *parse_call(ExpressionNode *p_previous_operand, bool p_can_assign);
 	ExpressionNode *parse_get_node(ExpressionNode *p_previous_operand, bool p_can_assign);
+	ExpressionNode *parse_nameof(ExpressionNode *p_previous_operand, bool p_can_assign);
 	ExpressionNode *parse_preload(ExpressionNode *p_previous_operand, bool p_can_assign);
 	ExpressionNode *parse_grouping(ExpressionNode *p_previous_operand, bool p_can_assign);
 	ExpressionNode *parse_cast(ExpressionNode *p_previous_operand, bool p_can_assign);

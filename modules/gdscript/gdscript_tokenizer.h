@@ -118,6 +118,7 @@ public:
 			FUNC,
 			TK_IN, // Conflict with WinAPI.
 			IS,
+			NAMEOF,
 			NAMESPACE,
 			PRELOAD,
 			SELF,

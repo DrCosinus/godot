@@ -1766,7 +1766,7 @@ static void _find_identifiers(const GDScriptParser::CompletionContext &p_context
 	}
 
 	static const char *_keywords_with_args[] = {
-		"assert", "preload",
+		"assert", "nameof", "preload",
 		nullptr
 	};
 

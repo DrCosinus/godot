@@ -3704,6 +3704,35 @@ GDScriptParser::ExpressionNode *GDScriptParser::parse_preload(ExpressionNode *p_
 	return preload;
 }
 
+GDScriptParser::ExpressionNode *GDScriptParser::parse_nameof(ExpressionNode *p_previous_operand, bool p_can_assign) {
+	LiteralNode *literal = alloc_node<LiteralNode>();
+	literal->value = StringName();
+
+	push_multiline(true);
+	consume(GDScriptTokenizer::Token::PARENTHESIS_OPEN, R"(Expected "(" after "nameof".)");
+
+	ExpressionNode *operand = parse_expression(false);
+
+	if (operand == nullptr) {
+		push_error(R"(Expected identifier or member access after "(".)");
+	} else if (operand->type == Node::IDENTIFIER) {
+		literal->value = static_cast<IdentifierNode *>(operand)->name;
+	} else if (operand->type == Node::SUBSCRIPT && static_cast<SubscriptNode *>(operand)->is_attribute) {
+		literal->value = static_cast<SubscriptNode *>(operand)->attribute->name;
+	} else {
+		push_error(R"-("nameof" expects an identifier or a member access (e.g. "nameof(my_var)" or "nameof(object.member)").)-", operand);
+	}
+
+	// Allow trailing comma.
+	match(GDScriptTokenizer::Token::COMMA);
+
+	pop_multiline();
+	consume(GDScriptTokenizer::Token::PARENTHESIS_CLOSE, R"*(Expected ")" after "nameof" argument.)*");
+	complete_extents(literal);
+
+	return literal;
+}
+
 GDScriptParser::ExpressionNode *GDScriptParser::parse_lambda(ExpressionNode *p_previous_operand, bool p_can_assign) {
 	LambdaNode *lambda = alloc_node<LambdaNode>();
 	lambda->parent_function = current_function;
@@ -4324,6 +4353,7 @@ GDScriptParser::ParseRule *GDScriptParser::get_rule(GDScriptTokenizer::Token::Ty
 		{ &GDScriptParser::parse_lambda,                    nullptr,                                        PREC_NONE }, // FUNC,
 		{ nullptr,                                          &GDScriptParser::parse_binary_operator,      	PREC_CONTENT_TEST }, // TK_IN,
 		{ nullptr,                                          &GDScriptParser::parse_type_test,            	PREC_TYPE_TEST }, // IS,
+		{ &GDScriptParser::parse_nameof,                    nullptr,                                        PREC_NONE }, // NAMEOF,
 		{ nullptr,                                          nullptr,                                        PREC_NONE }, // NAMESPACE,
 		{ &GDScriptParser::parse_preload,					nullptr,                                        PREC_NONE }, // PRELOAD,
 		{ &GDScriptParser::parse_self,                   	nullptr,                                        PREC_NONE }, // SELF,
