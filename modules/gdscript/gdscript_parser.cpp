@@ -3705,22 +3705,18 @@ GDScriptParser::ExpressionNode *GDScriptParser::parse_preload(ExpressionNode *p_
 }
 
 GDScriptParser::ExpressionNode *GDScriptParser::parse_nameof(ExpressionNode *p_previous_operand, bool p_can_assign) {
-	LiteralNode *literal = alloc_node<LiteralNode>();
-	literal->value = StringName();
+	NameOfNode *nameof = alloc_node<NameOfNode>();
 
 	push_multiline(true);
 	consume(GDScriptTokenizer::Token::PARENTHESIS_OPEN, R"(Expected "(" after "nameof".)");
 
-	ExpressionNode *operand = parse_expression(false);
+	nameof->expression = parse_expression(false);
 
-	if (operand == nullptr) {
+	if (nameof->expression == nullptr) {
 		push_error(R"(Expected identifier or member access after "(".)");
-	} else if (operand->type == Node::IDENTIFIER) {
-		literal->value = static_cast<IdentifierNode *>(operand)->name;
-	} else if (operand->type == Node::SUBSCRIPT && static_cast<SubscriptNode *>(operand)->is_attribute) {
-		literal->value = static_cast<SubscriptNode *>(operand)->attribute->name;
-	} else {
-		push_error(R"-("nameof" expects an identifier or a member access (e.g. "nameof(my_var)" or "nameof(object.member)").)-", operand);
+	} else if (nameof->expression->type != Node::IDENTIFIER && !(nameof->expression->type == Node::SUBSCRIPT && static_cast<SubscriptNode *>(nameof->expression)->is_attribute)) {
+		push_error(R"-("nameof" expects an identifier or a member access (e.g. "nameof(my_var)" or "nameof(object.member)").)-", nameof->expression);
+		nameof->expression = nullptr;
 	}
 
 	// Allow trailing comma.
@@ -3728,9 +3724,9 @@ GDScriptParser::ExpressionNode *GDScriptParser::parse_nameof(ExpressionNode *p_p
 
 	pop_multiline();
 	consume(GDScriptTokenizer::Token::PARENTHESIS_CLOSE, R"*(Expected ")" after "nameof" argument.)*");
-	complete_extents(literal);
+	complete_extents(nameof);
 
-	return literal;
+	return nameof;
 }
 
 GDScriptParser::ExpressionNode *GDScriptParser::parse_lambda(ExpressionNode *p_previous_operand, bool p_can_assign) {
@@ -6016,6 +6012,9 @@ void GDScriptParser::TreePrinter::print_expression(const ExpressionNode *p_expre
 		case Node::LITERAL:
 			print_literal(static_cast<const LiteralNode *>(p_expression));
 			break;
+		case Node::NAMEOF:
+			print_nameof(static_cast<const NameOfNode *>(p_expression));
+			break;
 		case Node::PRELOAD:
 			print_preload(static_cast<const PreloadNode *>(p_expression));
 			break;
@@ -6264,6 +6263,14 @@ void GDScriptParser::TreePrinter::print_parameter(const ParameterNode *p_paramet
 		push_text(" = ");
 		print_expression(p_parameter->initializer);
 	}
+}
+
+void GDScriptParser::TreePrinter::print_nameof(const NameOfNode *p_nameof) {
+	push_text("NameOf ( ");
+	if (p_nameof->expression != nullptr) {
+		print_expression(p_nameof->expression);
+	}
+	push_text(" )");
 }
 
 void GDScriptParser::TreePrinter::print_preload(const PreloadNode *p_preload) {

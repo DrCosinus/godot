@@ -1673,6 +1673,7 @@ void GDScriptAnalyzer::resolve_node(GDScriptParser::Node *p_node, bool p_is_root
 		case GDScriptParser::Node::IDENTIFIER:
 		case GDScriptParser::Node::LAMBDA:
 		case GDScriptParser::Node::LITERAL:
+		case GDScriptParser::Node::NAMEOF:
 		case GDScriptParser::Node::PRELOAD:
 		case GDScriptParser::Node::SELF:
 		case GDScriptParser::Node::SUBSCRIPT:
@@ -2703,6 +2704,9 @@ void GDScriptAnalyzer::reduce_expression(GDScriptParser::ExpressionNode *p_expre
 			break;
 		case GDScriptParser::Node::LITERAL:
 			reduce_literal(static_cast<GDScriptParser::LiteralNode *>(p_expression));
+			break;
+		case GDScriptParser::Node::NAMEOF:
+			reduce_nameof(static_cast<GDScriptParser::NameOfNode *>(p_expression));
 			break;
 		case GDScriptParser::Node::PRELOAD:
 			reduce_preload(static_cast<GDScriptParser::PreloadNode *>(p_expression));
@@ -4785,6 +4789,29 @@ void GDScriptAnalyzer::reduce_literal(GDScriptParser::LiteralNode *p_literal) {
 	p_literal->is_constant = true;
 
 	p_literal->type_constraint = type_from_variant(p_literal->reduced_value, p_literal);
+}
+
+void GDScriptAnalyzer::reduce_nameof(GDScriptParser::NameOfNode *p_nameof) {
+	GDScriptParser::ExpressionNode *operand = p_nameof->expression;
+	if (operand == nullptr) {
+		// The parser already reported the error.
+		p_nameof->type_constraint = type_from_variant(StringName(), p_nameof);
+		return;
+	}
+
+	// Reducing the operand resolves it, reports unknown symbols and marks it as used.
+	reduce_expression(operand);
+
+	StringName name;
+	if (operand->type == GDScriptParser::Node::IDENTIFIER) {
+		name = static_cast<GDScriptParser::IdentifierNode *>(operand)->name;
+	} else if (operand->type == GDScriptParser::Node::SUBSCRIPT) {
+		name = static_cast<GDScriptParser::SubscriptNode *>(operand)->attribute->name;
+	}
+
+	p_nameof->is_constant = true;
+	p_nameof->reduced_value = name;
+	p_nameof->type_constraint = type_from_variant(p_nameof->reduced_value, p_nameof);
 }
 
 void GDScriptAnalyzer::reduce_preload(GDScriptParser::PreloadNode *p_preload) {

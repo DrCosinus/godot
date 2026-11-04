@@ -1765,6 +1765,7 @@ public:
 		void print_match_branch(const MatchBranchNode *p_match_branch);
 		void print_match_pattern(const PatternNode *p_match_pattern);
 		void print_parameter(const ParameterNode *p_parameter);
+		void print_nameof(const NameOfNode *p_nameof);
 		void print_preload(const PreloadNode *p_preload);
 		void print_return(const ReturnNode *p_return);
 		void print_self(const SelfNode *p_self);

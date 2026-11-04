@@ -106,6 +106,7 @@ class GDScriptAnalyzer {
 	void reduce_identifier_from_base(GDScriptParser::IdentifierNode *p_identifier, GDScriptParser::DataType *p_base = nullptr);
 	void reduce_lambda(GDScriptParser::LambdaNode *p_lambda);
 	void reduce_literal(GDScriptParser::LiteralNode *p_literal);
+	void reduce_nameof(GDScriptParser::NameOfNode *p_nameof);
 	void reduce_preload(GDScriptParser::PreloadNode *p_preload);
 	void reduce_self(GDScriptParser::SelfNode *p_self);
 	void reduce_subscript(GDScriptParser::SubscriptNode *p_subscript, bool p_can_be_pseudo_type = false);
